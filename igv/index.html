@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pangenome4 — IGV.js</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 12px; }
+  h2 { margin: 4px 0 12px; }
+  .meta { color: #555; font-size: 13px; margin-bottom: 8px; }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: #444; margin: 6px 0 12px; }
+  .legend span { display: inline-block; width: 12px; height: 12px; vertical-align: middle; margin-right: 4px; border: 1px solid #888; }
+  #igv { border: 1px solid #ddd; border-radius: 4px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/igv@2.15.11/dist/igv.min.js"></script>
+</head>
+<body>
+<h2>Pangenome4 — variants vs. ref (IGV.js)</h2>
+<div class="meta">
+  Reference = simulated 2-chromosome genome (chr1, chr2; 10 kb each).
+  Each variant (div01..div15) was aligned to ref with <code>minimap2 -ax asm20</code>;
+  variants called with <code>paftools.js call</code>.
+</div>
+<div class="legend">
+  <div><b>Tracks per variant:</b></div>
+  <div>BAM = alignment of variant chromosomes to ref</div>
+  <div>VCF = SNPs + indels called from the alignment</div>
+</div>
+<div id="igv"></div>
+
+<script>
+const variants = ["div01","div02","div05","div10","div15"];
+// Distinct color per variant for the alignment track
+const COL = {
+  div01:"#1f77b4", div02:"#2ca02c", div05:"#ff7f0e",
+  div10:"#d62728", div15:"#9467bd"
+};
+
+const tracks = [];
+for (const v of variants) {
+  tracks.push({
+    name: `${v} alignment`,
+    type: "alignment",
+    format: "bam",
+    url: `${v}.bam`,
+    indexURL: `${v}.bam.bai`,
+    color: COL[v],
+    height: 80,
+    showSoftClips: true
+  });
+  tracks.push({
+    name: `${v} variants`,
+    type: "variant",
+    format: "vcf",
+    url: `${v}.vcf.gz`,
+    indexURL: `${v}.vcf.gz.tbi`,
+    displayMode: "EXPANDED",
+    height: 50
+  });
+}
+
+const options = {
+  reference: {
+    id: "pangenome4_ref",
+    name: "Pangenome4 ref",
+    fastaURL: "ref.fa",
+    indexURL: "ref.fa.fai"
+  },
+  locus: "chr1:1-10000",
+  tracks: tracks
+};
+
+igv.createBrowser(document.getElementById("igv"), options).then(b => {
+  console.log("IGV ready");
+});
+</script>
+</body>
+</html>
